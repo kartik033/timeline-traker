@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------------------------------------------------------------
+   Premium aurora / mesh-gradient background.
+   Multiple soft radial blobs layered over a deep base, slowly
+   drifting for a subtle "alive" feel without being distracting.
+   --------------------------------------------------------------- */
+.aurora-bg {
+  position: relative;
+  min-height: 100vh;
+  background-color: #0f1220;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(56, 107, 149, 0.55), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(142, 68, 173, 0.45), transparent 50%),
+    radial-gradient(circle at 75% 80%, rgba(73, 157, 62, 0.35), transparent 50%),
+    radial-gradient(circle at 25% 85%, rgba(237, 164, 58, 0.30), transparent 45%),
+    linear-gradient(180deg, #12142a 0%, #0f1220 100%);
+  background-size: 200% 200%, 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: aurora-drift 22s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift {
+  0%   { background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%; }
+  100% { background-position: 15% 10%, 85% 15%, 85% 85%, 10% 90%, 0% 0%; }
+}
+
+/* Frosted glass panel used for the card container so content still
+   reads clearly over the aurora background. */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 24px 64px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------------------------------------------------------------
+   Card entrance animation: fade + rise + slight scale, staggered
+   per index via the --i custom property set inline on each card.
+   --------------------------------------------------------------- */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.card-animate {
+  opacity: 0;
+  animation: card-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* Panels (header, form, compare tool) get a gentler fade-up too. */
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel-animate {
+  animation: panel-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg {
+    animation: none;
+  }
+  .card-animate,
+  .panel-animate {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+  }
+}
