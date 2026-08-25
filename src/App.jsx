@@ -4,7 +4,7 @@ import { useEvents } from './hooks/useEvents';
 import { useGuestTimeout } from './hooks/useGuestTimeout';
 import { colorThemes, pickIconFor, pickThemeFor } from './utils/themes';
 import { formatForInput } from './utils/dateHelpers';
-
+import Footer from './components/Footer';
 import Header from './components/Header';
 import AuthBanner from './components/AuthBanner';
 import CompareTool from './components/CompareTool';
@@ -245,6 +245,7 @@ export default function App() {
           />
         )}
       </div>
+      <Footer />
 
       {deleteConfirmId && (
         <DeleteModal onCancel={() => setDeleteConfirmId(null)} onConfirm={confirmDelete} />
