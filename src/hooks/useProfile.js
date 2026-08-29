@@ -8,9 +8,6 @@ export function useProfile(userId, isGuest) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Retries briefly on first load, since the DB trigger that creates a
-  // profile row on sign-up can lag a few hundred ms behind the auth
-  // session becoming available (especially right after an OAuth redirect).
   const fetchProfile = useCallback(async (retriesLeft = MAX_RETRIES) => {
     if (!userId || isGuest) {
       setProfile(null);
@@ -41,13 +38,15 @@ export function useProfile(userId, isGuest) {
     fetchProfile();
   }, [fetchProfile]);
 
+  // Upsert instead of update: if the row is somehow missing (trigger
+  // failure, race condition, pre-existing account), this creates it
+  // instead of throwing "cannot coerce to a single JSON object".
   const updateProfile = useCallback(async (updates) => {
     const { data, error } = await supabase
       .from('profiles')
-      .update(updates)
-      .eq('id', userId)
+      .upsert({ id: userId, ...updates }, { onConflict: 'id' })
       .select()
-      .single();
+      .maybeSingle();
     if (!error && data) setProfile(data);
     return { success: !error, error: error?.message };
   }, [userId]);
