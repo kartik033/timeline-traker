@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
-import { UserPlus, LogIn, X, ShieldCheck } from 'lucide-react';
+import { UserPlus, LogIn, X, ShieldCheck, Lock, Mail, ArrowRight, User } from 'lucide-react';
 
-export default function AuthBanner({ isGuest, authError, onSignUp, onSignIn, onGoogleSignIn, onSignOut, userEmail }) {
-  const [mode, setMode] = useState(null); // null | 'signup' | 'signin'
+export default function AuthBanner({
+  isGuest,
+  authError,
+  onSignUp,
+  onSignIn,
+  onSignInWithGoogle,
+  onSignOut,
+  onOpenProfile,
+  userEmail,
+  avatarUrl,
+  eventCount,
+}) {
+  const [mode, setMode] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [dismissed, setDismissed] = useState(false);
@@ -23,133 +34,153 @@ export default function AuthBanner({ isGuest, authError, onSignUp, onSignIn, onG
     if (result.success) closeForm();
   };
 
-  const handleGoogleSignIn = async () => {
-    await onGoogleSignIn();
-  };
-
-  if (!isGuest && !userEmail && authError) {
-    return (
-      <div className="glass-panel rounded-2xl p-4 mb-5 panel-animate">
-        <p className="text-sm font-semibold text-red-700">Authentication failed</p>
-        <p className="mt-1 text-xs text-red-600">{authError}</p>
-      </div>
-    );
-  }
-
-  // Registered user: show a small account chip instead of the banner.
   if (!isGuest) {
     return (
-      <div className="panel-animate flex items-center justify-between text-xs text-white/80 mb-3 px-1">
-        <span className="flex items-center gap-1.5">
-          <ShieldCheck size={13} aria-hidden="true" />
-          Signed in{userEmail ? ` as ${userEmail}` : ''} — your data syncs across devices.
-        </span>
-        <button onClick={onSignOut} className="underline hover:text-white transition-colors">
+      <div className="panel-animate flex items-center justify-between mb-4 px-1">
+        <button
+          onClick={onOpenProfile}
+          className="flex items-center gap-2 text-xs text-white/90 hover:text-white transition-colors group"
+        >
+          <span className="w-6 h-6 rounded-full overflow-hidden bg-white/20 flex items-center justify-center flex-shrink-0 ring-1 ring-white/30 group-hover:ring-white/60 transition-all">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <User size={12} aria-hidden="true" />
+            )}
+          </span>
+          <span className="flex items-center gap-1">
+            <ShieldCheck size={12} aria-hidden="true" className="text-emerald-300" />
+            {userEmail || 'Signed in'}
+          </span>
+        </button>
+        <button onClick={onSignOut} className="text-xs text-white/60 hover:text-white/90 underline transition-colors">
           Sign out
         </button>
       </div>
     );
   }
 
-  if (dismissed && !mode) {
-    return (
-      <div className="flex justify-end mb-5 panel-animate">
-        <button
-          onClick={() => setDismissed(false)}
-          className="flex items-center gap-1.5 rounded-xl bg-white/90 px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-white"
-        >
-          <UserPlus size={15} aria-hidden="true" />
-          Sign up or log in
-        </button>
-      </div>
-    );
-  }
+  if (dismissed && !mode) return null;
 
   return (
-    <div className="glass-panel rounded-2xl p-4 mb-5 panel-animate">
+    <div className="glass-panel rounded-2xl overflow-hidden mb-5 panel-animate">
       {!mode ? (
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-gray-700 leading-snug">
-            You're using <strong>guest mode</strong>. Data stays only on this browser — sign up to
-            save it permanently and access it anywhere.
+        <div className="p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
+                <Lock size={15} className="text-blue-700" aria-hidden="true" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 leading-tight">
+                  Save your progress
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                  {eventCount > 0
+                    ? `Keep ${eventCount} event${eventCount !== 1 ? 's' : ''} safe across devices`
+                    : "You're browsing as a guest"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setDismissed(true)}
+              className="p-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
+              aria-label="Dismiss"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={onSignInWithGoogle}
+              className="w-full flex items-center justify-center gap-2.5 bg-white border border-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm"
+            >
+              <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#FFC107" d="M43.6 20.5H42V20.5H24v7h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.1 5.1 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/>
+                <path fill="#FF3D00" d="M6.3 14.1l6.5 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.1 5.1 29.3 3 24 3 15.6 3 8.4 7.9 6.3 14.1z"/>
+                <path fill="#4CAF50" d="M24 45c5.2 0 9.9-1.7 13.5-4.6l-6.2-5.3c-2 1.5-4.6 2.4-7.3 2.4-5.3 0-9.8-3.6-11.3-8.5l-6.5 5C8.4 40.1 15.6 45 24 45z"/>
+                <path fill="#1976D2" d="M43.6 20.5H42V20.5H24v7h11.3c-.8 2.3-2.2 4.2-4 5.5l6.2 5.3C40.8 35.5 44 30.5 44 24c0-1.2-.1-2.4-.4-3.5z"/>
+              </svg>
+              Continue with Google
+            </button>
+
+            <div className="flex items-center gap-2 my-1">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">or</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            <button
+              onClick={() => setMode('signup')}
+              className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-800 transition-colors shadow-sm"
+            >
+              <Mail size={14} aria-hidden="true" />
+              Continue with Email
+              <ArrowRight size={13} aria-hidden="true" className="opacity-60" />
+            </button>
+          </div>
+
+          <p className="text-[10px] text-gray-400 text-center mt-3 leading-snug">
+            Free forever. No credit card. Takes under a minute.
           </p>
+
           <button
-            onClick={() => setDismissed(true)}
-            className="p-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
-            aria-label="Dismiss"
+            onClick={() => setMode('signin')}
+            className="w-full text-center text-xs text-gray-500 hover:text-gray-700 mt-3 underline"
           >
-            <X size={16} />
+            Already have an account? Log in
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <h3 className="text-sm font-bold text-gray-800">
-            {mode === 'signup' ? 'Create an account' : 'Log in'}
+        <div className="p-4 sm:p-5">
+          <button
+            onClick={closeForm}
+            className="text-xs text-gray-400 hover:text-gray-600 mb-3 flex items-center gap-1"
+          >
+            ← Back
+          </button>
+          <h3 className="text-sm font-bold text-gray-900 mb-3">
+            {mode === 'signup' ? 'Create your account' : 'Welcome back'}
           </h3>
-          <input
-            type="email"
-            required
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="password"
-            required
-            minLength={6}
-            placeholder="Password (min 6 characters)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {authError && <p className="text-xs text-red-600">{authError}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={closeForm}
-              className="flex-1 bg-gray-100 text-gray-700 font-semibold py-2 rounded-xl text-sm hover:bg-gray-200"
-            >
-              Cancel
-            </button>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} aria-hidden="true" />
+              <input
+                type="email"
+                required
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              />
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} aria-hidden="true" />
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Password (min 6 characters)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              />
+            </div>
+            {authError && (
+              <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{authError}</p>
+            )}
             <button
               type="submit"
               disabled={submitting}
-              className="flex-[2] bg-blue-600 text-white font-semibold py-2 rounded-xl text-sm hover:bg-blue-700 disabled:opacity-60"
+              className="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm"
             >
-              {submitting ? 'Please wait...' : mode === 'signup' ? 'Sign Up' : 'Log In'}
+              {submitting ? 'Please wait...' : mode === 'signup' ? 'Create Account' : 'Log In'}
             </button>
-          </div>
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            Continue with Google
-          </button>
-        </form>
-      )}
-
-      {!mode && (
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={() => setMode('signup')}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white font-semibold py-2 rounded-xl text-sm hover:bg-blue-700"
-          >
-            <UserPlus size={14} aria-hidden="true" /> Sign Up
-          </button>
-          <button
-            onClick={() => setMode('signin')}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-gray-100 text-gray-700 font-semibold py-2 rounded-xl text-sm hover:bg-gray-200"
-          >
-            <LogIn size={14} aria-hidden="true" /> Log In
-          </button>
-          <button
-            onClick={handleGoogleSignIn}
-            className="flex-1 rounded-xl border border-gray-200 bg-white py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            Google
-          </button>
+          </form>
+          <p className="text-[10px] text-gray-400 flex items-center justify-center gap-1 mt-3">
+            <Lock size={10} aria-hidden="true" /> Your data is encrypted and never shared.
+          </p>
         </div>
       )}
     </div>

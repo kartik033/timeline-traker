@@ -1,20 +1,35 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useEvents } from './hooks/useEvents';
+import { useProfile } from './hooks/useProfile';
 import { useGuestTimeout } from './hooks/useGuestTimeout';
-import { colorThemes, pickIconFor, pickThemeFor } from './utils/themes';
+import { colorThemes, pickThemeFor, pickIconFor } from './utils/themes';
 import { formatForInput } from './utils/dateHelpers';
-import Footer from './components/Footer';
+import { exportElementAsImage } from './utils/exportImage';
+
 import Header from './components/Header';
 import AuthBanner from './components/AuthBanner';
+import ProfileModal from './components/ProfileModal';
 import CompareTool from './components/CompareTool';
 import EventForm from './components/EventForm';
 import EventList from './components/EventList';
 import DeleteModal from './components/DeleteModal';
 import Toast from './components/Toast';
+import Footer from './components/Footer';
 
 export default function App() {
-  const { userId, isGuest, loading: authLoading, authError, signUpFromGuest, signInWithPassword, signInWithGoogle, signOut, session } = useAuth();
+  const {
+    userId,
+    isGuest,
+    loading: authLoading,
+    authError,
+    signUpFromGuest,
+    signInWithPassword,
+    signInWithGoogle,
+    signOut,
+    session,
+  } = useAuth();
+
   const {
     events,
     loading: eventsLoading,
@@ -27,8 +42,11 @@ export default function App() {
     clearEvents,
   } = useEvents(userId, isGuest, colorThemes);
 
+  const { profile, updateProfile, uploadAvatar } = useProfile(userId, isGuest);
+
   useGuestTimeout(isGuest, clearEvents);
 
+  const eventListRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const [newEventName, setNewEventName] = useState('');
@@ -39,6 +57,7 @@ export default function App() {
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [compareId1, setCompareId1] = useState('');
   const [compareId2, setCompareId2] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -139,30 +158,9 @@ export default function App() {
     }
   };
 
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `timeline-tracker-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImport = (file) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const imported = JSON.parse(e.target.result);
-        if (!Array.isArray(imported)) throw new Error('Invalid format');
-        await bulkReplace(imported);
-      } catch (err) {
-        alert('Could not import file: invalid JSON format.');
-      }
-    };
-    reader.readAsText(file);
+  const handleShareImage = async () => {
+    if (!eventListRef.current) return;
+    await exportElementAsImage(eventListRef.current, 'my-timeline.png');
   };
 
   const handleSignUp = async (email, password) => {
@@ -172,6 +170,13 @@ export default function App() {
       await migrateGuestEventsToAccount(newUserId);
     }
     return result;
+  };
+
+  // Explicitly wipe in-memory events on sign-out, so a stale registered
+  // user's data doesn't linger on screen until a full page refresh.
+  const handleSignOut = async () => {
+    await signOut();
+    clearEvents();
   };
 
   const sortedEvents = [...events].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -193,8 +198,7 @@ export default function App() {
             isFormOpen={isFormOpen}
             onToggleCompare={toggleCompare}
             onToggleAdd={toggleAdd}
-            onExport={handleExport}
-            onImport={handleImport}
+            onShareImage={handleShareImage}
           />
         </div>
 
@@ -203,9 +207,12 @@ export default function App() {
           authError={authError}
           onSignUp={handleSignUp}
           onSignIn={signInWithPassword}
-          onGoogleSignIn={signInWithGoogle}
-          onSignOut={signOut}
+          onSignInWithGoogle={signInWithGoogle}
+          onSignOut={handleSignOut}
+          onOpenProfile={() => setIsProfileOpen(true)}
           userEmail={session?.user?.email}
+          avatarUrl={profile?.avatar_url}
+          eventCount={events.length}
         />
 
         {isCompareOpen && (
@@ -237,15 +244,28 @@ export default function App() {
         {eventsLoading ? (
           <p className="text-white/70 text-sm text-center py-6">Loading events...</p>
         ) : (
-          <EventList
-            events={sortedEvents}
-            currentTime={currentTime}
-            onEdit={handleEdit}
-            onDeleteRequest={requestDelete}
-          />
+          <div ref={eventListRef}>
+            <EventList
+              events={sortedEvents}
+              currentTime={currentTime}
+              onEdit={handleEdit}
+              onDeleteRequest={requestDelete}
+            />
+          </div>
         )}
       </div>
+
       <Footer />
+
+      {isProfileOpen && (
+        <ProfileModal
+          profile={profile}
+          userEmail={session?.user?.email}
+          onClose={() => setIsProfileOpen(false)}
+          onUpdateProfile={updateProfile}
+          onUploadAvatar={uploadAvatar}
+        />
+      )}
 
       {deleteConfirmId && (
         <DeleteModal onCancel={() => setDeleteConfirmId(null)} onConfirm={confirmDelete} />

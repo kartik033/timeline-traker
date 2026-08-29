@@ -62,17 +62,16 @@ export function useAuth() {
     return { success: true, data };
   }, []);
 
+  // Redirects to Google's consent screen. On return, onAuthStateChange
+  // picks up the new session automatically -- no manual handling needed
+  // as long as Supabase's Site URL / Redirect URLs are configured correctly.
   const signInWithGoogle = useCallback(async () => {
     setAuthError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     });
-    if (error) {
-      setAuthError(error.message);
-      return { success: false, error: error.message };
-    }
-    return { success: true };
+    if (error) setAuthError(error.message);
   }, []);
 
   const signOut = useCallback(async () => {
