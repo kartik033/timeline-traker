@@ -1,29 +1,58 @@
-import React, { useRef, useState } from 'react';
-import { X, Camera, Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Camera, Loader2, Check } from 'lucide-react';
 
 export default function ProfileModal({ profile, onClose, onUpdateProfile, onUploadAvatar, userEmail }) {
   const fileInputRef = useRef(null);
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [bio, setBio] = useState(profile?.bio || '');
+  const [avatarPreview, setAvatarPreview] = useState(profile?.avatar_url || null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Keep local state in sync if `profile` updates from outside (e.g. after
+  // the retry-fetch in useProfile resolves).
+  useEffect(() => {
+    setDisplayName(profile?.display_name || '');
+    setBio(profile?.bio || '');
+    setAvatarPreview(profile?.avatar_url || null);
+  }, [profile]);
 
   const handleAvatarClick = () => fileInputRef.current?.click();
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Show an instant local preview while the upload happens in the
+    // background, so the UI never looks like nothing happened.
+    const localPreviewUrl = URL.createObjectURL(file);
+    setAvatarPreview(localPreviewUrl);
     setUploading(true);
-    await onUploadAvatar(file);
+    setErrorMsg('');
+
+    const result = await onUploadAvatar(file);
     setUploading(false);
+
+    if (!result.success) {
+      setErrorMsg(result.error || 'Upload failed. Try a smaller image.');
+      setAvatarPreview(profile?.avatar_url || null);
+    }
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await onUpdateProfile({ display_name: displayName, bio });
+    setErrorMsg('');
+    const result = await onUpdateProfile({ display_name: displayName, bio });
     setSaving(false);
-    onClose();
+    if (result.success) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    } else {
+      setErrorMsg(result.error || 'Could not save profile.');
+    }
   };
 
   return (
@@ -46,8 +75,8 @@ export default function ProfileModal({ profile, onClose, onUpdateProfile, onUplo
             className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-white shadow-md group"
             aria-label="Change profile picture"
           >
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl font-bold">
                 {displayName?.[0]?.toUpperCase() || '?'}
@@ -96,12 +125,19 @@ export default function ProfileModal({ profile, onClose, onUpdateProfile, onUplo
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
+
+          {errorMsg && (
+            <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{errorMsg}</p>
+          )}
+
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-xl text-sm hover:bg-blue-700 disabled:opacity-60"
+            className={`w-full font-semibold py-2 rounded-xl text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5 ${
+              saved ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
-            {saving ? 'Saving...' : 'Save Profile'}
+            {saving ? 'Saving...' : saved ? (<><Check size={14} /> Saved</>) : 'Save Profile'}
           </button>
         </form>
       </div>

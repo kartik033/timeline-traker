@@ -1,28 +1,19 @@
 import React, { useState } from 'react';
-import { UserPlus, LogIn, X, ShieldCheck, Lock, Mail, ArrowRight, User } from 'lucide-react';
+import { X, Lock, Mail, ArrowRight } from 'lucide-react';
 
-export default function AuthBanner({
-  isGuest,
-  authError,
-  onSignUp,
-  onSignIn,
-  onSignInWithGoogle,
-  onSignOut,
-  onOpenProfile,
-  userEmail,
-  avatarUrl,
-  eventCount,
-}) {
-  const [mode, setMode] = useState(null);
+export default function AuthBanner({ isOpen, onClose, authError, onSignUp, onSignIn, onSignInWithGoogle, eventCount }) {
+  const [mode, setMode] = useState('choose'); // 'choose' | 'signup' | 'signin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [dismissed, setDismissed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const closeForm = () => {
-    setMode(null);
+  if (!isOpen) return null;
+
+  const handleClose = () => {
+    setMode('choose');
     setEmail('');
     setPassword('');
+    onClose();
   };
 
   const handleSubmit = async (e) => {
@@ -31,40 +22,12 @@ export default function AuthBanner({
     const action = mode === 'signup' ? onSignUp : onSignIn;
     const result = await action(email, password);
     setSubmitting(false);
-    if (result.success) closeForm();
+    if (result.success) handleClose();
   };
-
-  if (!isGuest) {
-    return (
-      <div className="panel-animate flex items-center justify-between mb-4 px-1">
-        <button
-          onClick={onOpenProfile}
-          className="flex items-center gap-2 text-xs text-white/90 hover:text-white transition-colors group"
-        >
-          <span className="w-6 h-6 rounded-full overflow-hidden bg-white/20 flex items-center justify-center flex-shrink-0 ring-1 ring-white/30 group-hover:ring-white/60 transition-all">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <User size={12} aria-hidden="true" />
-            )}
-          </span>
-          <span className="flex items-center gap-1">
-            <ShieldCheck size={12} aria-hidden="true" className="text-emerald-300" />
-            {userEmail || 'Signed in'}
-          </span>
-        </button>
-        <button onClick={onSignOut} className="text-xs text-white/60 hover:text-white/90 underline transition-colors">
-          Sign out
-        </button>
-      </div>
-    );
-  }
-
-  if (dismissed && !mode) return null;
 
   return (
     <div className="glass-panel rounded-2xl overflow-hidden mb-5 panel-animate">
-      {!mode ? (
+      {mode === 'choose' ? (
         <div className="p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex items-center gap-2.5">
@@ -72,9 +35,7 @@ export default function AuthBanner({
                 <Lock size={15} className="text-blue-700" aria-hidden="true" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900 leading-tight">
-                  Save your progress
-                </h3>
+                <h3 className="text-sm font-bold text-gray-900 leading-tight">Save your progress</h3>
                 <p className="text-xs text-gray-500 mt-0.5 leading-snug">
                   {eventCount > 0
                     ? `Keep ${eventCount} event${eventCount !== 1 ? 's' : ''} safe across devices`
@@ -82,11 +43,7 @@ export default function AuthBanner({
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setDismissed(true)}
-              className="p-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
-              aria-label="Dismiss"
-            >
+            <button onClick={handleClose} className="p-1 text-gray-400 hover:text-gray-600 flex-shrink-0" aria-label="Close">
               <X size={16} />
             </button>
           </div>
@@ -135,7 +92,7 @@ export default function AuthBanner({
       ) : (
         <div className="p-4 sm:p-5">
           <button
-            onClick={closeForm}
+            onClick={() => setMode('choose')}
             className="text-xs text-gray-400 hover:text-gray-600 mb-3 flex items-center gap-1"
           >
             ← Back

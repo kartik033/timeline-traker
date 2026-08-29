@@ -5,11 +5,12 @@ import { useProfile } from './hooks/useProfile';
 import { useGuestTimeout } from './hooks/useGuestTimeout';
 import { colorThemes, pickThemeFor, pickIconFor } from './utils/themes';
 import { formatForInput } from './utils/dateHelpers';
-import { exportElementAsImage } from './utils/exportImage';
+import { shareOrGetImage } from './utils/exportImage';
 
 import Header from './components/Header';
 import AuthBanner from './components/AuthBanner';
 import ProfileModal from './components/ProfileModal';
+import SharePreviewModal from './components/SharePreviewModal';
 import CompareTool from './components/CompareTool';
 import EventForm from './components/EventForm';
 import EventList from './components/EventList';
@@ -58,6 +59,9 @@ export default function App() {
   const [compareId1, setCompareId1] = useState('');
   const [compareId2, setCompareId2] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [shareDataUrl, setShareDataUrl] = useState(null);
+  const [sharing, setSharing] = useState(false);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -159,8 +163,18 @@ export default function App() {
   };
 
   const handleShareImage = async () => {
-    if (!eventListRef.current) return;
-    await exportElementAsImage(eventListRef.current, 'my-timeline.png');
+    if (!eventListRef.current || sharing) return;
+    setSharing(true);
+    try {
+      const result = await shareOrGetImage(eventListRef.current, 'my-timeline.png');
+      if (!result.shared && !result.cancelled) {
+        setShareDataUrl(result.dataUrl);
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+    } finally {
+      setSharing(false);
+    }
   };
 
   const handleSignUp = async (email, password) => {
@@ -172,8 +186,6 @@ export default function App() {
     return result;
   };
 
-  // Explicitly wipe in-memory events on sign-out, so a stale registered
-  // user's data doesn't linger on screen until a full page refresh.
   const handleSignOut = async () => {
     await signOut();
     clearEvents();
@@ -196,24 +208,36 @@ export default function App() {
           <Header
             isCompareOpen={isCompareOpen}
             isFormOpen={isFormOpen}
+            isGuest={isGuest}
+            avatarUrl={profile?.avatar_url}
             onToggleCompare={toggleCompare}
             onToggleAdd={toggleAdd}
             onShareImage={handleShareImage}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenProfile={() => setIsProfileOpen(true)}
           />
         </div>
 
         <AuthBanner
-          isGuest={isGuest}
+          isOpen={isAuthOpen}
+          onClose={() => setIsAuthOpen(false)}
           authError={authError}
           onSignUp={handleSignUp}
           onSignIn={signInWithPassword}
           onSignInWithGoogle={signInWithGoogle}
-          onSignOut={handleSignOut}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          userEmail={session?.user?.email}
-          avatarUrl={profile?.avatar_url}
           eventCount={events.length}
         />
+
+        {!isGuest && (
+          <div className="panel-animate flex justify-end mb-3 -mt-2">
+            <button
+              onClick={handleSignOut}
+              className="text-[11px] text-white/50 hover:text-white/80 underline transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
+        )}
 
         {isCompareOpen && (
           <div className="glass-panel rounded-2xl panel-animate">
@@ -265,6 +289,10 @@ export default function App() {
           onUpdateProfile={updateProfile}
           onUploadAvatar={uploadAvatar}
         />
+      )}
+
+      {shareDataUrl && (
+        <SharePreviewModal dataUrl={shareDataUrl} onClose={() => setShareDataUrl(null)} />
       )}
 
       {deleteConfirmId && (
