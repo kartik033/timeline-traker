@@ -17,6 +17,11 @@ export function useAuth() {
           setSession(data.session);
           setLoading(false);
         }
+        // Clean up any leftover OAuth hash fragment (#access_token=...)
+        // left in the URL after Supabase finishes processing it.
+        if (window.location.hash.includes('access_token')) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
         return;
       }
 
@@ -32,6 +37,11 @@ export function useAuth() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (isMounted) setSession(newSession);
+      // Also clean up on any subsequent auth state change that arrives
+      // with a hash fragment still attached (e.g. right after OAuth redirect).
+      if (window.location.hash.includes('access_token')) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
     });
 
     return () => {
@@ -62,9 +72,6 @@ export function useAuth() {
     return { success: true, data };
   }, []);
 
-  // Redirects to Google's consent screen. On return, onAuthStateChange
-  // picks up the new session automatically -- no manual handling needed
-  // as long as Supabase's Site URL / Redirect URLs are configured correctly.
   const signInWithGoogle = useCallback(async () => {
     setAuthError(null);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -80,9 +87,54 @@ export function useAuth() {
     setSession(data.session);
   }, []);
 
+  // Permanently deletes the current (non-guest) account: their events and
+  // profile row are removed via DB cascade, their avatar file is removed
+  // in storage, and the auth user itself is deleted. Runs server-side via
+  // an Edge Function since it needs the service-role key.
+  const deleteAccount = useCallback(async () => {
+    setAuthError(null);
+
+    if (isGuest) {
+      return { success: false, error: 'Guest sessions have nothing to delete.' };
+    }
+
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      return { success: false, error: 'No active session.' };
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-account', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (error) {
+        setAuthError(error.message);
+        return { success: false, error: error.message };
+      }
+      if (data?.error) {
+        setAuthError(data.error);
+        return { success: false, error: data.error };
+      }
+
+      // Account is gone server-side — drop the local session and start a
+      // fresh guest session, same as signOut().
+      await supabase.auth.signOut();
+      const { data: anonData } = await supabase.auth.signInAnonymously();
+      setSession(anonData.session);
+
+      return { success: true };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete account.';
+      setAuthError(message);
+      return { success: false, error: message };
+    }
+  }, [isGuest, session]);
+
   return {
     session,
     userId: session?.user?.id ?? null,
+    userEmail: session?.user?.email ?? null,
     isGuest,
     loading,
     authError,
@@ -90,5 +142,6 @@ export function useAuth() {
     signInWithPassword,
     signInWithGoogle,
     signOut,
+    deleteAccount,
   };
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Camera, Loader2, Check } from 'lucide-react';
+import { X, Camera, Loader2, Check, AlertTriangle } from 'lucide-react';
 
-export default function ProfileModal({ profile, onClose, onUpdateProfile, onUploadAvatar, userEmail }) {
+export default function ProfileModal({ profile, onClose, onUpdateProfile, onUploadAvatar, userEmail, onRequestDeleteAccount, }) {
   const fileInputRef = useRef(null);
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [bio, setBio] = useState(profile?.bio || '');
@@ -113,6 +113,7 @@ export default function ProfileModal({ profile, onClose, onUpdateProfile, onUplo
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">
               Bio (optional)
@@ -140,6 +141,27 @@ export default function ProfileModal({ profile, onClose, onUpdateProfile, onUplo
             {saving ? 'Saving...' : saved ? (<><Check size={14} /> Saved</>) : 'Save Profile'}
           </button>
         </form>
+
+        {onRequestDeleteAccount && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex items-start gap-2 mb-2">
+              <AlertTriangle size={14} className="text-red-500 mt-0.5 shrink-0" />
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Danger Zone
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Permanently delete your account and all of your countdowns. This cannot be undone.
+            </p>
+            <button
+              type="button"
+              onClick={onRequestDeleteAccount}
+              className="w-full font-semibold py-2 rounded-xl text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Delete Account
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

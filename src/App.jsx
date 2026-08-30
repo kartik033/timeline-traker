@@ -17,6 +17,7 @@ import EventList from './components/EventList';
 import DeleteModal from './components/DeleteModal';
 import Toast from './components/Toast';
 import Footer from './components/Footer';
+import DeleteAccountModal from './components/DeleteAccountModal';
 
 export default function App() {
   const {
@@ -28,6 +29,7 @@ export default function App() {
     signInWithPassword,
     signInWithGoogle,
     signOut,
+    deleteAccount,
     session,
   } = useAuth();
 
@@ -62,6 +64,7 @@ export default function App() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [shareDataUrl, setShareDataUrl] = useState(null);
   const [sharing, setSharing] = useState(false);
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -81,6 +84,16 @@ export default function App() {
   }, []);
 
   useEffect(() => () => clearTimeout(undoTimeoutRef.current), []);
+
+  const handleDeleteAccount = async () => {
+    const result = await deleteAccount();
+    if (result.success) {
+      setIsDeleteAccountOpen(false);
+      setIsProfileOpen(false);
+      clearEvents();
+    }
+    return result;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,10 +136,14 @@ export default function App() {
 
     clearTimeout(undoTimeoutRef.current);
     setPendingDelete({ event: eventToDelete, index });
+    undoTimeoutRef.current = setTimeout(() => {
+      setPendingDelete(null);
+    }, 5000); // toast disappears after 5s if not undone
   };
 
   const undoDelete = async () => {
     if (!pendingDelete) return;
+    clearTimeout(undoTimeoutRef.current);
     await restoreEvent(pendingDelete.event);
     setPendingDelete(null);
   };
@@ -288,6 +305,14 @@ export default function App() {
           onClose={() => setIsProfileOpen(false)}
           onUpdateProfile={updateProfile}
           onUploadAvatar={uploadAvatar}
+          onRequestDeleteAccount={() => setIsDeleteAccountOpen(true)}
+        />
+      )}
+
+      {isDeleteAccountOpen && (
+        <DeleteAccountModal
+          onCancel={() => setIsDeleteAccountOpen(false)}
+          onConfirm={handleDeleteAccount}
         />
       )}
 
