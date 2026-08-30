@@ -1,12 +1,92 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Countdown Tracker</title>
-	</head>
-	<body>
-		<div id="root"></div>
-		<script type="module" src="/src/main.jsx"></script>
-	</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary SEO tags -->
+    <title>MyPathTracker — Countdown Tracker for Life's Big Milestones</title>
+    <meta
+      name="description"
+      content="MyPathTracker is a free countdown tracker for tracking every milestone that matters — from your Express Entry and immigration timeline to birthdays, deadlines, and personal goals. Create, compare, and share visual countdowns in seconds."
+    />
+    <meta
+      name="keywords"
+      content="countdown tracker, countdown app, timeline app, Express Entry tracker, immigration timeline tracker, event countdown, deadline tracker, milestone tracker"
+    />
+    <link rel="canonical" href="https://mypathtracker.com/" />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="MyPathTracker" />
+
+    <!-- Open Graph (Facebook, LinkedIn, Slack previews) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mypathtracker.com/" />
+    <meta property="og:title" content="MyPathTracker — Countdown Tracker for Life's Big Milestones" />
+    <meta
+      property="og:description"
+      content="Track every countdown that matters — Express Entry, visa timelines, birthdays, deadlines, and goals — in one clean, shareable dashboard."
+    />
+    <meta property="og:image" content="https://mypathtracker.com/og-image.png" />
+    <meta property="og:site_name" content="MyPathTracker" />
+
+    <!-- Twitter/X card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MyPathTracker — Countdown Tracker for Life's Big Milestones" />
+    <meta
+      name="twitter:description"
+      content="Track every countdown that matters — Express Entry, visa timelines, birthdays, deadlines, and goals — in one clean, shareable dashboard."
+    />
+    <meta name="twitter:image" content="https://mypathtracker.com/og-image.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+    <!-- Structured data: helps Google and AI answer engines understand what this app is -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MyPathTracker",
+        "url": "https://mypathtracker.com/",
+        "description": "A free countdown tracker for milestones, deadlines, and life events — including Express Entry and immigration timelines.",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!--
+      Static fallback content for crawlers/AI agents that don't execute
+      JavaScript. Hidden visually once React mounts into #root, but present
+      in the raw HTML so the page is never an empty shell to a crawler.
+      React overwrites #root's contents on mount, so this never appears
+      to real visitors with JS enabled.
+    -->
+    <noscript>
+      <main style="font-family: sans-serif; max-width: 640px; margin: 40px auto; padding: 0 20px;">
+        <h1>MyPathTracker — Countdown Tracker</h1>
+        <p>
+          MyPathTracker helps you count down to every milestone that matters: your Express Entry
+          or immigration timeline, birthdays, deadlines, exams, trips, and personal goals.
+        </p>
+        <h2>Features</h2>
+        <ul>
+          <li>Create unlimited countdowns with custom names, dates, and themes</li>
+          <li>Compare two timelines side by side</li>
+          <li>Share a snapshot of your countdown as an image</li>
+          <li>Sign in to sync your countdowns across devices, or use it instantly as a guest</li>
+        </ul>
+        <p>Please enable JavaScript to use the full MyPathTracker app.</p>
+      </main>
+    </noscript>
+
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
