@@ -14,9 +14,7 @@ export default function Header({
 }) {
   return (
     <div className="flex justify-between items-center mb-5 sm:mb-6 px-1 gap-2">
-      <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-sm truncate">
-        Timeline Tracker
-      </h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-sm truncate">MyPathTracker</h1>
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {/* Primary account action: always visible, never a dead end. */}
