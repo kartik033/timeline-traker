@@ -20,18 +20,11 @@ import Footer from './components/Footer';
 import DeleteAccountModal from './components/DeleteAccountModal';
 
 export default function App() {
-  const {
-    userId,
-    isGuest,
-    loading: authLoading,
-    authError,
-    signUpFromGuest,
-    signInWithPassword,
-    signInWithGoogle,
-    signOut,
-    deleteAccount,
-    session,
-  } = useAuth();
+ const {
+  userId, isGuest, loading: authLoading, authError,
+  signUpFromGuest, signInWithPassword, signInWithGoogle, signOut,
+  deleteAccount, logGuestActivity, session,
+} = useAuth();
 
   const {
     events,
@@ -235,15 +228,16 @@ export default function App() {
           />
         </div>
 
-        <AuthBanner
-          isOpen={isAuthOpen}
-          onClose={() => setIsAuthOpen(false)}
-          authError={authError}
-          onSignUp={handleSignUp}
-          onSignIn={signInWithPassword}
-          onSignInWithGoogle={signInWithGoogle}
-          eventCount={events.length}
-        />
+       <AuthBanner
+  isOpen={isAuthOpen}
+  onClose={() => setIsAuthOpen(false)}
+  authError={authError}
+  onSignUp={handleSignUp}
+  onSignIn={signInWithPassword}
+  onSignInWithGoogle={signInWithGoogle}
+  eventCount={events.length}
+  onLogActivity={logGuestActivity}
+/>
 
         {!isGuest && (
           <div className="panel-animate flex justify-end mb-3 -mt-2">

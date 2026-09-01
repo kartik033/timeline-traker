@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Lock, Mail, ArrowRight } from 'lucide-react';
 
-export default function AuthBanner({ isOpen, onClose, authError, onSignUp, onSignIn, onSignInWithGoogle, eventCount }) {
+export default function AuthBanner({ isOpen, onClose, authError, onSignUp, onSignIn, onSignInWithGoogle, eventCount, onLogActivity }) {
   const [mode, setMode] = useState('choose'); // 'choose' | 'signup' | 'signin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const hasLoggedView = useRef(false);
+
+  // Log exactly once per time the banner transitions from closed -> open,
+  // not on every re-render while it stays open.
+  useEffect(() => {
+    if (isOpen && !hasLoggedView.current) {
+      hasLoggedView.current = true;
+      onLogActivity?.('viewed_signup_banner');
+    }
+    if (!isOpen) {
+      hasLoggedView.current = false;
+    }
+  }, [isOpen, onLogActivity]);
 
   if (!isOpen) return null;
 

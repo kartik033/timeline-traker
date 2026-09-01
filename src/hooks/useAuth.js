@@ -17,8 +17,6 @@ export function useAuth() {
           setSession(data.session);
           setLoading(false);
         }
-        // Clean up any leftover OAuth hash fragment (#access_token=...)
-        // left in the URL after Supabase finishes processing it.
         if (window.location.hash.includes('access_token')) {
           window.history.replaceState(null, '', window.location.pathname + window.location.search);
         }
@@ -37,8 +35,6 @@ export function useAuth() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (isMounted) setSession(newSession);
-      // Also clean up on any subsequent auth state change that arrives
-      // with a hash fragment still attached (e.g. right after OAuth redirect).
       if (window.location.hash.includes('access_token')) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
       }
@@ -87,10 +83,6 @@ export function useAuth() {
     setSession(data.session);
   }, []);
 
-  // Permanently deletes the current (non-guest) account: their events and
-  // profile row are removed via DB cascade, their avatar file is removed
-  // in storage, and the auth user itself is deleted. Runs server-side via
-  // an Edge Function since it needs the service-role key.
   const deleteAccount = useCallback(async () => {
     setAuthError(null);
 
@@ -117,8 +109,6 @@ export function useAuth() {
         return { success: false, error: data.error };
       }
 
-      // Account is gone server-side — drop the local session and start a
-      // fresh guest session, same as signOut().
       await supabase.auth.signOut();
       const { data: anonData } = await supabase.auth.signInAnonymously();
       setSession(anonData.session);
@@ -130,6 +120,21 @@ export function useAuth() {
       return { success: false, error: message };
     }
   }, [isGuest, session]);
+
+  // Fire-and-forget activity logger for guest_activity_log. Never throws or
+  // blocks the UI — analytics failures should be invisible to the user.
+  const logGuestActivity = useCallback(async (action) => {
+    const currentUserId = session?.user?.id;
+    if (!currentUserId || !action) return;
+
+    const { error } = await supabase
+      .from('guest_activity_log')
+      .insert({ user_id: currentUserId, action });
+
+    if (error) {
+      console.error('logGuestActivity failed:', error.message);
+    }
+  }, [session]);
 
   return {
     session,
@@ -143,5 +148,6 @@ export function useAuth() {
     signInWithGoogle,
     signOut,
     deleteAccount,
+    logGuestActivity,
   };
 }
