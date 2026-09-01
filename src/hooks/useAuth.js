@@ -125,6 +125,7 @@ export function useAuth() {
   // blocks the UI — analytics failures should be invisible to the user.
   const logGuestActivity = useCallback(async (action) => {
     const currentUserId = session?.user?.id;
+    console.log('[DEBUG] logGuestActivity called:', { currentUserId, action, sessionExists: !!session });
     if (!currentUserId || !action) return;
 
     const { error } = await supabase
