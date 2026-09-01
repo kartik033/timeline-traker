@@ -10,15 +10,15 @@ export default function AuthBanner({ isOpen, onClose, authError, onSignUp, onSig
 
   // Log exactly once per time the banner transitions from closed -> open,
   // not on every re-render while it stays open.
-  useEffect(() => {
-    if (isOpen && !hasLoggedView.current) {
-      hasLoggedView.current = true;
-      onLogActivity?.('viewed_signup_banner');
-    }
-    if (!isOpen) {
-      hasLoggedView.current = false;
-    }
-  }, [isOpen, onLogActivity]);
+ useEffect(() => {
+  if (isOpen && !hasLoggedView.current && onLogActivity) {
+    hasLoggedView.current = true;
+    onLogActivity('viewed_signup_banner');
+  }
+  if (!isOpen) {
+    hasLoggedView.current = false;
+  }
+}, [isOpen, onLogActivity]);
 
   if (!isOpen) return null;
 
